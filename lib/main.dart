@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-
 import 'Pages/homePage.dart';
 import 'Providers/weather_provider.dart';
 
@@ -18,11 +18,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.purple,
+        textTheme: GoogleFonts.merriweatherTextTheme()
       ),
       initialRoute: HomePage.routeName,
-      routes: {HomePage.routeName: (_) => const HomePage()},
+      routes: {
+        HomePage.routeName: (_) => const HomePage(),
+
+      },
     );
   }
 }

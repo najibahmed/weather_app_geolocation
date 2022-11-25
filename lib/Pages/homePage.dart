@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app08/Utils/constants.dart';
+import 'package:weather_app08/Utils/helper_functions.dart';
+import '../CustomWidgets/weather_condition.dart';
 import '../Providers/weather_provider.dart';
 
 
@@ -16,40 +19,40 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late WeatherProvider weatherProvider;
   bool calledOnce = true;
-  bool isLoading = true;
   @override
   void didChangeDependencies() {
     if (calledOnce) {
       weatherProvider = Provider.of<WeatherProvider>(context);
-      _determinePosition().then((position) {
-        print('Latitude : ${position.latitude} and ${position.longitude}');
-        weatherProvider.getCurrentWeatherData(position).then((value) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-      });
+      _getData();
     }
     calledOnce = false;
     super.didChangeDependencies();
   }
 
+  void _getData() {
+    _determinePosition().then((position) {
+      weatherProvider.setNewLocation(position.latitude, position.longitude);
+      weatherProvider.getData();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.purple.shade50,
       appBar: AppBar(
-        title: Text('Weather App'),
+        backgroundColor: Color(0xff594DB5),
+
+        title: const Text('Weather App'),
       ),
-      body: ListView(
+      body: weatherProvider.hasDataResponse? ListView(
         children: [
-          isLoading
-              ? CircularProgressIndicator()
-              : Text(
-            '${weatherProvider.currentWeatherResponse.main!.temp}',
-            style: TextStyle(fontSize: 24),
-          )
+          _currentWeatherSection(),
+          _foreCastWeatherSection()
         ],
-      ),
+      )
+      :
+      const Center(child: CircularProgressIndicator(),),
     );
   }
 
@@ -88,5 +91,178 @@ class _HomePageState extends State<HomePage> {
     // When we reach here, permissions are granted and we can
     // continue accessing the position of the device.
     return await Geolocator.getCurrentPosition();
+  }
+
+  Widget _currentWeatherSection() {
+    final current = weatherProvider.currentWeatherResponse;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Container(
+            width: double.infinity,
+            height: 375,
+            decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [
+                      Color(0xff594DB5),
+                      Color(0xff928ACE),
+                      Color(0xff594DB5)
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight
+                ),
+                borderRadius: BorderRadius.circular(40)
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children:  [
+                 Text(
+                   getFormattedDate(current!.dt!,pattern:'MMM dd yyyy' ),
+                  style: txtNormalWhite54,
+                ),
+                Text('${current.name},${current.sys!.country}',
+                style: txtAddress24
+                  ),
+                Text('${current.main!.temp!.round()}$degree${weatherProvider.tempUnitSymbol}',
+                style: txtTempBig80,),
+                Image.network('$iconPrefix${current.weather![0].icon}$iconSuffix'),
+                Text(
+                  current.weather![0].description!,
+                  style: txtNormal16,
+                ),
+                Text('Feels Like ${current.main!.temp!.round()}$degree${weatherProvider.tempUnitSymbol}',
+                  style: txtTempSmall18,),
+                Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Wrap(
+                      children: [
+                        Text('Sunrise ${getFormattedDate(current.sys!.sunrise!,pattern: 'hh:mm a')}   ',
+                        style: txtNormal16
+                          ,),
+                        Text('Sunset ${getFormattedDate(current.sys!.sunset!,pattern: 'hh:mm a')}',
+                        style: txtNormal16
+                          ,)
+                      ],
+                    )
+                ),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 20),
+          height: 122,
+          width: double.infinity,
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              WeatherDetails(
+                imageName: "carbon_humidity",
+                value: "${current.main!.humidity}",
+                level: "Humidity",
+              ),
+              WeatherDetails(
+                imageName: "tabler_wind",
+                value: "${current.wind!.speed} m/s",
+                level: "Wind",
+              ),
+              WeatherDetails(
+                imageName: "ion_speedometer",
+                value: "${current.main!.pressure}",
+                level: "Air Pressure",
+              ),
+              WeatherDetails(
+                imageName: "ic_round-visibility",
+                value: "${current.visibility} meter",
+                level: "Visibility",
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 20, vertical: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Today",
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ),
+              Row(
+                children: [
+                  Text(
+                    "Next 5 Days",
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Icon(Icons.arrow_forward_ios)
+                ],
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  _foreCastWeatherSection() {
+    final foreCastList= weatherProvider.forecastWeatherResponse!.list!;
+    return Padding(
+      padding: const EdgeInsets.only(top:20.0,bottom: 20),
+      child: SizedBox(
+        height: 200,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: foreCastList.length,
+            itemBuilder: (context, index) {
+            final item = foreCastList[index];
+            return Container(
+              width: 110,
+              height: 150,
+              margin: EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [
+                        Color(0xff594DB5),
+                        Color(0xff928ACE),
+                        Color(0xff594DB5)
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight
+                  ),
+                  borderRadius: BorderRadius.circular(15)
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                     Text(
+                         getFormattedDate(item.dt!,pattern: 'EEE hh:mm a',),
+                       style: txtNormal16,
+                     ),
+                  Image.network('$iconPrefix${item.weather![0].icon}$iconSuffix'),
+                  Text('${item.main!.tempMax!.round()}/${item.main!.tempMin!.round()}$degree${weatherProvider.tempUnitSymbol}',
+                  style: txtNormal16,
+                  ),
+                  Text(
+                    item.weather![0].description!,
+                    style: txtNormal16,
+                  )
+                ],
+              ),
+            );
+            }),
+      ),
+    );
   }
 }
