@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as Http;
 import 'package:weather_app08/Utils/constants.dart';
-import '../Models/current_weather_response.dart';
-import '../Models/forecast_weather_response.dart';
+import '../Models/current_weather_model.dart';
+import '../Models/forecast_weather_model.dart';
 
 class WeatherProvider extends ChangeNotifier {
   CurrentWeatherResponse? currentWeatherResponse ;
@@ -14,14 +14,25 @@ class WeatherProvider extends ChangeNotifier {
   double longitude = 0.0;
   String tempUnit = metric;
   String tempUnitSymbol = celsius;
+  String timePattern = timePattern12;
 
   void setNewLocation(double lat, double lng){
     latitude = lat;
     longitude = lng;
   }
+
+  void setTimePattern(bool status){
+    timePattern = status ? timePattern24 : timePattern12;
+    notifyListeners();
+  }
   void getData (){
     _getCurrentWeatherData();
     _getForecastWeatherData();
+  }
+  void setTempUnit(bool status){
+    tempUnit= status? imperial: metric;
+    tempUnitSymbol=status? fahrenheit: celsius;
+    getData();
   }
 
   bool get hasDataResponse =>

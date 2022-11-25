@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_glow/flutter_glow.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app08/Pages/setting_page.dart';
 import 'package:weather_app08/Utils/constants.dart';
 import 'package:weather_app08/Utils/helper_functions.dart';
+import 'package:weather_app08/Utils/weather_preference.dart';
 import '../CustomWidgets/weather_condition.dart';
 import '../Providers/weather_provider.dart';
 
@@ -29,21 +32,40 @@ class _HomePageState extends State<HomePage> {
     super.didChangeDependencies();
   }
 
-  void _getData() {
-    _determinePosition().then((position) {
-      weatherProvider.setNewLocation(position.latitude, position.longitude);
-      weatherProvider.getData();
-    });
+  void _getData() async{
+   final position = await _determinePosition();
+    weatherProvider.setNewLocation(position.latitude, position.longitude);
+    final tempFormatStatus = await getBool(tempUnitKey);
+    final timeFormatStatus = await getBool(timeFormatKey);
+    weatherProvider.setTempUnit(tempFormatStatus);
+    weatherProvider.setTimePattern(timeFormatStatus);
+
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.purple.shade50,
       appBar: AppBar(
-        backgroundColor: Color(0xff594DB5),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(onPressed: (){
 
-        title: const Text('Weather App'),
+          },
+              icon: Icon(Icons.my_location_outlined,
+              color: themeColor,)),
+          IconButton(onPressed: (){
+
+          },
+              icon: Icon(Icons.search,color: themeColor,)),
+          IconButton(onPressed: (){
+            Navigator.pushNamed(context, SettingsPage.routeName);
+          },
+              icon: Icon(Icons.settings,color: themeColor,)),
+          SizedBox(width: 10)
+        ],
       ),
       body: weatherProvider.hasDataResponse? ListView(
         children: [
@@ -98,10 +120,10 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(15.0),
           child: Container(
             width: double.infinity,
-            height: 375,
+            height: 350,
             decoration: BoxDecoration(
                 gradient: const LinearGradient(
                     colors: [
@@ -118,18 +140,32 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children:  [
                  Text(
-                   getFormattedDate(current!.dt!,pattern:'MMM dd yyyy' ),
+                   getFormattedDate(current!.dt!,pattern:'dd MMM yyyy' ),
                   style: txtNormalWhite54,
                 ),
-                Text('${current.name},${current.sys!.country}',
-                style: txtAddress24
-                  ),
-                Text('${current.main!.temp!.round()}$degree${weatherProvider.tempUnitSymbol}',
-                style: txtTempBig80,),
-                Image.network('$iconPrefix${current.weather![0].icon}$iconSuffix'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.location_on_outlined,color:Colors.white,),
+                    Text('${current.name},${current.sys!.country}',
+                    style: txtAddress24
+                      ),
+                  ],
+                ),
+                GlowText('${current.main!.temp!.round()}$degree${weatherProvider.tempUnitSymbol}',
+                style: TextStyle(
+                  fontSize: 90,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold
+                ),
+                ),
+                Image.network('$iconPrefix${current.weather![0].icon}$iconSuffix',
+                height: 80,
+                width: 80,
+                ),
                 Text(
                   current.weather![0].description!,
-                  style: txtNormal16,
+                  style: txtNormalWhite54,
                 ),
                 Text('Feels Like ${current.main!.temp!.round()}$degree${weatherProvider.tempUnitSymbol}',
                   style: txtTempSmall18,),
@@ -137,11 +173,11 @@ class _HomePageState extends State<HomePage> {
                     padding: EdgeInsets.all(16.0),
                     child: Wrap(
                       children: [
-                        Text('Sunrise ${getFormattedDate(current.sys!.sunrise!,pattern: 'hh:mm a')}   ',
-                        style: txtNormal16
+                        Text('Sunrise ${getFormattedDate(current.sys!.sunrise!,pattern: weatherProvider.timePattern)}   ',
+                        style: txtNormalWhite54
                           ,),
-                        Text('Sunset ${getFormattedDate(current.sys!.sunset!,pattern: 'hh:mm a')}',
-                        style: txtNormal16
+                        Text('Sunset ${getFormattedDate(current.sys!.sunset!,pattern: weatherProvider.timePattern)}',
+                        style: txtNormalWhite54
                           ,)
                       ],
                     )
@@ -162,7 +198,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               WeatherDetails(
                 imageName: "carbon_humidity",
-                value: "${current.main!.humidity}",
+                value: "${current.main!.humidity}%",
                 level: "Humidity",
               ),
               WeatherDetails(
@@ -172,7 +208,7 @@ class _HomePageState extends State<HomePage> {
               ),
               WeatherDetails(
                 imageName: "ion_speedometer",
-                value: "${current.main!.pressure}",
+                value: "${current.main!.pressure} hPa",
                 level: "Air Pressure",
               ),
               WeatherDetails(
@@ -215,7 +251,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  _foreCastWeatherSection() {
+  Widget _foreCastWeatherSection() {
     final foreCastList= weatherProvider.forecastWeatherResponse!.list!;
     return Padding(
       padding: const EdgeInsets.only(top:20.0,bottom: 20),
@@ -247,7 +283,7 @@ class _HomePageState extends State<HomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                      Text(
-                         getFormattedDate(item.dt!,pattern: 'EEE hh:mm a',),
+                         getFormattedDate(item.dt!,pattern: 'EEE ${weatherProvider.timePattern}',),
                        style: txtNormal16,
                      ),
                   Image.network('$iconPrefix${item.weather![0].icon}$iconSuffix'),

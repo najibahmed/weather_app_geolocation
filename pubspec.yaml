@@ -42,7 +42,9 @@ dependencies:
   http:
   geolocator:
   carousel_slider:
-  google_fonts: 
+  google_fonts:
+  geocoding:
+  flutter_glow:
 
 dev_dependencies:
   flutter_test:

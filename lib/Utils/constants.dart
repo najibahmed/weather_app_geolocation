@@ -10,6 +10,8 @@ const String weatherApiKey ='147df95ac5624a2756742c7028fc7942';
  const String iconPrefix = 'https://openweathermap.org/img/wn/';
  const String iconSuffix = '@2x.png';
  const Color themeColor = Color(0xff594DB5);
+ const String timePattern12 = 'hh:mm a';
+ const String timePattern24 = 'HH:mm';
 
 
  const txtTempBig80 = TextStyle(
