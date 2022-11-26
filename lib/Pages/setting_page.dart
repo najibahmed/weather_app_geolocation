@@ -51,8 +51,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 await setBool(tempUnitKey, value);
                 Provider.of<WeatherProvider>(context,listen: false).setTempUnit(value);
               },
-            title: const Text('Show temperature in fahrenheit',),
-            subtitle: const Text('Default is Celsius'),
+            title: const Text('Show temperature in Fahrenheit.',),
+            subtitle: const Text('Default is Celsius.'),
             activeColor: themeColor,
           ),
           SwitchListTile(

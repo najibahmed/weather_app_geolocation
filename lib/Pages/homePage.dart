@@ -57,7 +57,14 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(Icons.my_location_outlined,
               color: themeColor,)),
           IconButton(onPressed: (){
-
+            showSearch(
+                context: context,
+                delegate: _CitySearchDeleget(),
+            ).then((city){
+              if(city != null && city.isNotEmpty){
+                weatherProvider.convertAddressToLatLng(city);
+              }
+            });
           },
               icon: Icon(Icons.search,color: themeColor,)),
           IconButton(onPressed: (){
@@ -301,4 +308,60 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+class _CitySearchDeleget extends SearchDelegate<String>{
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(onPressed: (){
+        query = '';
+      },
+
+          icon: Icon(Icons.clear,color: themeColor))
+    ];
+    throw UnimplementedError();
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+   return IconButton(onPressed: (){
+      close(context, '');
+   },
+       icon: Icon(Icons.arrow_back,color: themeColor));
+    throw UnimplementedError();
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return ListTile(
+      tileColor: Colors.purple.shade50,
+      onTap: (){
+        close(context, query);
+      },title: Text(query),
+      leading: const Icon(Icons.search,color: themeColor,),
+    );
+    throw UnimplementedError();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final filteredList = query.isEmpty ? cities
+        : cities.where((city) => city.toLowerCase().startsWith(query.toLowerCase())).toList();
+    return ListView.builder(
+        itemCount:filteredList.length ,
+        itemBuilder: (context, index) {
+          final item = filteredList[index];
+          return  ListTile(
+            tileColor: Colors.purple.shade50,
+            onTap: (){
+              query = item;
+              close(context, query);
+            },title: Text(item),
+          );
+
+        },
+    );
+  }
+
 }

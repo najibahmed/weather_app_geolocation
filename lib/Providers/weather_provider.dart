@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as Http;
 import 'package:weather_app08/Utils/constants.dart';
@@ -25,6 +26,22 @@ class WeatherProvider extends ChangeNotifier {
     timePattern = status ? timePattern24 : timePattern12;
     notifyListeners();
   }
+   Future<void> convertAddressToLatLng(String city)async{
+    try {
+       final locationList = await locationFromAddress(city);
+       if(locationList.isNotEmpty){
+         final location = locationList.first;
+         latitude = location.latitude;
+         longitude = location.longitude;
+         getData();
+       }else{
+         print('No location found from your provided Adress.');
+       }
+    } catch(error){
+      print(error.toString());
+    }
+   }
+
   void getData (){
     _getCurrentWeatherData();
     _getForecastWeatherData();
